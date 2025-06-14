@@ -1,41 +1,36 @@
 import re
-from typing import Tuple, Optional
+from dataclasses import dataclass
+
+@dataclass
+class ProductInfo:
+    brand: str
+    model: str
+    storage: str
+    color: str
 
 class ProductNormalizer:
-    BRAND_SYNONYMS = {
-        'apple': 'Apple',
-        'samsung': 'Samsung',
-        'xiaomi': 'Xiaomi'
-    }
+    def __init__(self, raw_name):
+        self.raw_name = raw_name
+        self._normalize()
     
-    COLOR_SYNONYMS = {
-        'гб': 'gb',
-        'синій': 'blue',
-        'чорний': 'black',
-        # ... другие синонимы
-    }
-    
-    @classmethod
-    def normalize_name(cls, raw_name: str) -> Tuple[str, Optional[dict]]:
-        """Нормализует название продукта и извлекает атрибуты"""
-        name = raw_name.lower()
+    def _normalize(self):
+        name = self.raw_name.lower()
+        name = re.sub(r'\(.*?\)', '', name)  # Удаляем скобки
         
-        # Удаление лишних слов
-        for word in ['смартфон', 'мобильный телефон', 'купить']:
-            name = name.replace(word, '')
-            
-        # Извлечение бренда
-        brand = None
-        for brand_synonym, normalized_brand in cls.BRAND_SYNONYMS.items():
-            if brand_synonym in name:
-                brand = normalized_brand
-                name = name.replace(brand_synonym, '')
-                break
-                
-        # Дальнейшая обработка...
-        return normalized_name, {
-            'brand': brand,
-            'model': extracted_model,
-            'storage': storage,
-            'color': color
-        }
+        # Извлекаем компоненты
+        self.product_info = ProductInfo(
+            brand=self._extract_brand(name),
+            model=self._extract_model(name),
+            storage=self._extract_storage(name),
+            color=self._extract_color(name)
+        )
+        
+        self.normalized_name = f"{self.product_info.brand} {self.product_info.model}"
+        self.product_key = f"{self.product_info.brand}_{self.product_info.model}"
+    
+    def _extract_brand(self, name):
+        if 'apple' in name or 'iphone' in name:
+            return 'Apple'
+        return 'Unknown'
+    
+    # Другие методы извлечения...
